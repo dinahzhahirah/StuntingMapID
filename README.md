@@ -9,7 +9,6 @@ Dashboard interaktif untuk analisis clustering prevalensi stunting di seluruh pr
 - **Pemilihan Variabel**: Fleksibilitas memilih variabel untuk analisis clustering
 - **Metode Clustering**: Support untuk Single, Complete, Average, Ward Linkage dan K-Means
 - **Jumlah Cluster**: Dapat disesuaikan antara 3-7 cluster
-- **Dark/Light Mode**: Toggle tampilan dengan ikon bulan/matahari
 - **Filter Cluster**: Filter visualisasi berdasarkan cluster tertentu
 - **Pencarian Provinsi**: Cari dan highlight provinsi spesifik dengan informasi detail
 
