@@ -7,7 +7,7 @@ Aplikasi ini merupakan sebuah dashboard interaktif berbasis **Streamlit** yang d
 ### 🎯 Fitur Inti
 - **Upload Data**: Mendukung upload data CSV terupdate atau menggunakan data default tahun 2023 
 - **Pemilihan Variabel**: Fleksibilitas memilih variabel untuk analisis clustering
-- **Metode Clustering**: Support untuk Hierarchical Cluastering (Single, Complete, Average, dan Ward Linkage) dan K-Means
+- **Metode Clustering**: Support untuk Hierarchical Clustering (Single, Complete, Average, dan Ward Linkage) dan K-Means
 - **Jumlah Cluster**: Dapat disesuaikan antara 3-7 cluster
 - **Filter Cluster**: Filter visualisasi berdasarkan cluster tertentu
 - **Pencarian Provinsi**: Cari dan highlight provinsi spesifik dengan informasi detail
