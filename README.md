@@ -1,26 +1,31 @@
 # Dashboard Clustering Stunting Indonesia 🗺️
 
-Dashboard interaktif untuk analisis clustering prevalensi stunting di seluruh provinsi Indonesia menggunakan berbagai metode clustering dan visualisasi yang komprehensif.
+Aplikasi ini merupakan sebuah dashboard interaktif berbasis **Streamlit** yang dirancang untuk melakukan **analisis pengelompokan (clustering)** terhadap provinsi-provinsi di Indonesia berdasarkan prevalensi stunting dan sejumlah indikator sosial-ekonomi lainnya. Tujuan utama dari aplikasi ini adalah untuk membantu pengambil kebijakan dan pihak terkait dalam mengidentifikasi kelompok wilayah yang memiliki karakteristik serupa, sehingga intervensi dapat dilakukan secara lebih tepat sasaran dan efektif.
 
 ## ✨ Fitur Utama
 
 ### 🎯 Fitur Inti
-- **Upload Data**: Mendukung upload data CSV terbaru atau menggunakan data default 2023
+- **Upload Data**: Mendukung upload data CSV terupdate atau menggunakan data default tahun 2023 
 - **Pemilihan Variabel**: Fleksibilitas memilih variabel untuk analisis clustering
-- **Metode Clustering**: Support untuk Single, Complete, Average, Ward Linkage dan K-Means
+- **Metode Clustering**: Support untuk Hierarchical Cluastering (Single, Complete, Average, dan Ward Linkage) dan K-Means
 - **Jumlah Cluster**: Dapat disesuaikan antara 3-7 cluster
 - **Filter Cluster**: Filter visualisasi berdasarkan cluster tertentu
 - **Pencarian Provinsi**: Cari dan highlight provinsi spesifik dengan informasi detail
+- Penanganan nilai yang hilang (missing value) melalui **imputasi berbasis centroid cluster terdekat**.
+- Penentuan **prioritas intervensi** berdasarkan skor komposit dari seluruh indikator.
+- Fitur ekspor hasil clustering dalam format CSV.
+
+
 
 ### 📊 Menu Dashboard
 
 #### 1. **Main Dashboard**
 - KPI nasional (rata-rata stunting, jumlah cluster, provinsi tertinggi/terendah)
-- Peta hasil clustering (scatter plot dengan visualisasi cluster)
+- Peta hasil clustering (peta choropleth distribusi cluster per provinsi)
+- Jumlah provinsi per cluster
 - Bar chart rata-rata indikator per cluster
 - Boxplot distribusi data per cluster
-- Jumlah provinsi per cluster
-- Interpretasi dan rekomendasi untuk setiap cluster
+- Interpretasi dan rekomendasi pengabilan kebijakan untuk setiap cluster
 
 #### 2. **Analisis Cluster**
 - Preprocessing otomatis (duplikat, missing values, standardisasi)
@@ -38,11 +43,8 @@ Dashboard interaktif untuk analisis clustering prevalensi stunting di seluruh pr
 
 #### 4. **Hasil Clustering**
 - Tabel lengkap hasil clustering dengan kategori risiko
-- Ringkasan statistik per cluster
 - Download hasil dalam format CSV
-- Visualisasi distribusi cluster (pie chart)
-- Parallel coordinates plot
-- Profil detail setiap cluster dengan radar chart
+
 
 ## 🚀 Cara Menjalankan
 
@@ -53,23 +55,22 @@ pip install -r requirements.txt
 
 ### Menjalankan Aplikasi
 ```bash
-streamlit run dashboard_stunting.py
+streamlit run dashboard.py
 ```
 
 ### Atau dengan custom port
 ```bash
-streamlit run dashboard_stunting.py --server.port 8501
+streamlit run dashboard.py --server.port 8501
 ```
 
 ## 📁 Struktur File
 
 ```
-📦 Dashboard Stunting
+📦 StuntingMapID
 ├── 📄 dashboard_stunting.py      # File utama aplikasi
 ├── 📄 requirements.txt           # Dependencies Python
 ├── 📄 Stunting2023.csv          # Data sample
 ├── 📄 README.md                 # Dokumentasi
-└── 📄 template_stunting.csv     # Template upload data
 ```
 
 ## 📋 Format Data
@@ -91,8 +92,7 @@ Data harus dalam format CSV dengan kolom berikut:
 
 ### 1. **Setup Awal**
 - Jalankan aplikasi dan tunggu hingga interface terbuka
-- Pilih tema (Dark/Light) menggunakan tombol 🌙/☀️
-- Upload data baru atau gunakan data default 2023
+- Upload data terupdate atau gunakan data default tahun 2023
 
 ### 2. **Konfigurasi Analisis**
 - **Pemilihan Variabel**: Centang variabel yang ingin dianalisis
@@ -109,29 +109,6 @@ Data harus dalam format CSV dengan kolom berikut:
 - Periksa "Validasi Cluster" untuk memahami kualitas clustering
 - Download hasil di tab "Hasil Clustering"
 
-## 🔍 Interpretasi Hasil
-
-### Kategori Risiko Stunting:
-- **Risiko Sangat Tinggi**: > 30%
-- **Risiko Tinggi**: 25-30%
-- **Risiko Sedang**: 20-25%
-- **Risiko Rendah**: < 20%
-
-### Metrik Validasi:
-- **Silhouette Score**: Semakin tinggi (mendekati 1) semakin baik
-- **Rasio Sw/Sb**: Semakin rendah semakin baik
-- **AU Bootstrap**: > 95% menunjukkan stabilitas cluster yang baik
-
-## 📊 Visualisasi yang Tersedia
-
-1. **Scatter Plot Clustering**: Menampilkan hasil cluster dalam 2D
-2. **Bar Chart Horizontal**: Perbandingan rata-rata indikator per cluster
-3. **Box Plot**: Distribusi data setiap indikator per cluster
-4. **Dendrogram**: Visualisasi hierarchical clustering
-5. **Silhouette Plot**: Evaluasi kualitas cluster
-6. **Pie Chart**: Distribusi provinsi per cluster
-7. **Parallel Coordinates**: Profil multidimensional cluster
-8. **Radar Chart**: Profil karakteristik setiap cluster
 
 ## 🔧 Troubleshooting
 
@@ -141,7 +118,6 @@ Data harus dalam format CSV dengan kolom berikut:
 3. **Error clustering**: Pastikan minimal 2 variabel dipilih dan data numerik valid
 
 ### Tips Optimasi:
-- Gunakan data yang sudah dibersihkan untuk hasil terbaik
 - Pilih variabel yang relevan dan tidak redundan
 - Eksperimen dengan berbagai metode clustering untuk perbandingan
 - Perhatikan interpretasi silhouette score untuk menentukan jumlah cluster optimal
@@ -158,7 +134,6 @@ Untuk pertanyaan atau masalah teknis, silakan:
 ### Version 1.0
 - ✅ Implementasi lengkap semua fitur yang diminta
 - ✅ Support untuk 5 metode clustering
-- ✅ Dark/Light mode dengan toggle
 - ✅ Pencarian dan filter provinsi
 - ✅ Download hasil dan template
 - ✅ Validasi cluster comprehensive
