@@ -1027,14 +1027,14 @@ def main():
                 st.info("Tidak cukup cluster untuk validasi (minimal 2 cluster berbeda).")
             
             def bootstrap_clustering(X, method='ward', n_clusters=5, n_bootstrap=100):
-                """Simulasi bootstrap berdasarkan stabilitas keanggotaan cluster."""
+                """Simulasi bootstrap berdasarkan stabilitas keanggotaan cluster"""
                 n_samples = X.shape[0]
             
-                # Clustering baseline untuk referensi label
+                # Clustering baseline
                 base_linkage = linkage(X, method=method)
                 base_labels = fcluster(base_linkage, n_clusters, criterion='maxclust')
             
-                # Hitung berapa kali tiap titik data muncul di cluster yang sama di bootstrap samples
+                # Stabilitas keanggotaan
                 stability_counts = defaultdict(int)
             
                 for _ in range(n_bootstrap):
@@ -1044,18 +1044,17 @@ def main():
                     boot_linkage = linkage(X_bootstrap, method=method)
                     boot_labels = fcluster(boot_linkage, n_clusters, criterion='maxclust')
             
-                    # Cocokkan tiap titik bootstrap dengan label asli (via indeks)
                     for i, original_idx in enumerate(idx_bootstrap):
                         if original_idx < len(base_labels):
                             if base_labels[original_idx] == boot_labels[i]:
                                 stability_counts[original_idx] += 1
             
-                # Hitung AU per titik data (persentase stabilitas cluster tiap titik)
+                # AU per data point
                 au_values_per_point = np.array([
                     stability_counts[i] / n_bootstrap * 100 for i in range(n_samples)
                 ])
             
-                # Hitung AU dan BP per cluster (rata-rata dan median stabilitas anggota cluster)
+                # AU dan BP per cluster
                 clusterwise_au = []
                 clusterwise_bp = []
             
@@ -1063,26 +1062,19 @@ def main():
                     members = (base_labels == c)
                     au_vals = au_values_per_point[members]
                     clusterwise_au.append(np.mean(au_vals))
-                    clusterwise_bp.append(np.median(au_vals))  # proxy BP
+                    clusterwise_bp.append(np.median(au_vals))  # proxy
             
                 return np.array(clusterwise_au), np.array(clusterwise_bp)
             
-            # ======== BAGIAN STREAMLIT DI TAB VALIDASI CLUSTER ======== #
-            if 'cluster_results' in st.session_state and st.session_state.clustering_method != 'kmeans':
-                st.subheader("Analisis Multiscale Bootstrap")
+                # Jalankan fungsi bootstrap
+                au_vals, bp_vals = bootstrap_clustering(
+                    X=st.session_state.processed_data['X_scaled'],
+                    method=st.session_state.clustering_method,
+                    n_clusters=st.session_state.n_clusters,
+                    n_bootstrap=100  # bisa kamu ubah
+                )
             
-                X_scaled = st.session_state.processed_data['X_scaled']
-                selected_method = st.session_state.clustering_method
-                n_clusters = st.session_state.n_clusters
-            
-                with st.spinner("🔁 Melakukan simulasi bootstrap..."):
-                    au_vals, bp_vals = bootstrap_clustering(
-                        X=X_scaled,
-                        method=selected_method,
-                        n_clusters=n_clusters,
-                        n_bootstrap=100
-                    )
-            
+                # Tabel hasil
                 bootstrap_df = pd.DataFrame({
                     'Cluster': [f'Cluster {i+1}' for i in range(len(au_vals))],
                     'AU (%)': au_vals,
@@ -1106,7 +1098,7 @@ def main():
             <div class="cluster-interpretation">
             <strong>Interpretasi AU dan BP:</strong><br><br>
             
-            - <strong>AU (Approximately Unbiased):</strong> Mengukur stabilitas cluster berdasarkan hasil bootstrap. Jika AU > 95%, cluster dianggap sangat stabil dan tidak terbentuk secara acak.<br>
+            - <strong>AU (Approximately Unbiased):</strong> Mengukur stabilitas cluster berdasarkan hasil bootstrap. Jika AU > 95%, cluster dianggap sangat stabil dan tidak terbentuk secara acak.
             - <strong>BP (Bootstrap Probability):</strong> Probabilitas kemunculan cluster dalam sampling ulang. BP > 90% menunjukkan cluster cukup kuat.<br><br>
             
             Nilai AU & BP yang tinggi menunjukkan bahwa struktur pengelompokan cukup konsisten terhadap variasi data. Hasil ini memperkuat kepercayaan terhadap segmentasi yang dihasilkan dan bisa digunakan untuk rekomendasi kebijakan berbasis data.
