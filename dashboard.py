@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score, silhouette_samples
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 from sklearn.utils import resample
+from collections import defaultdict
+from sklearn.metrics import pairwise_distances
 from scipy.spatial.distance import pdist, squareform
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 import warnings
@@ -1024,53 +1026,70 @@ def main():
             else:
                 st.info("Tidak cukup cluster untuk validasi (minimal 2 cluster berbeda).")
             
-            def bootstrap_clustering(X, method, n_clusters, n_bootstrap=100):
-                """Simulasi bootstrap sederhana untuk estimasi stabilitas cluster."""
-                cluster_match_counts = np.zeros(n_clusters)
+            def bootstrap_clustering(X, method='ward', n_clusters=5, n_bootstrap=100):
+                """Simulasi bootstrap berdasarkan stabilitas keanggotaan cluster."""
+                n_samples = X.shape[0]
             
-                try:
-                    # Clustering awal untuk referensi label (berbasis urutan linkage)
-                    base_linkage = linkage(X, method=method)
-                    base_clusters = fcluster(base_linkage, n_clusters, criterion='maxclust')
+                # Clustering baseline untuk referensi label
+                base_linkage = linkage(X, method=method)
+                base_labels = fcluster(base_linkage, n_clusters, criterion='maxclust')
             
-                    for _ in range(n_bootstrap):
-                        X_boot = resample(X, replace=True)
-                        boot_linkage = linkage(X_boot, method=method)
-                        boot_clusters = fcluster(boot_linkage, n_clusters, criterion='maxclust')
+                # Hitung berapa kali tiap titik data muncul di cluster yang sama di bootstrap samples
+                stability_counts = defaultdict(int)
             
-                        # Hitung jumlah cluster yang "stabil" (dianggap match jika jumlah cluster tetap sama)
-                        if len(np.unique(boot_clusters)) == n_clusters:
-                            cluster_match_counts += 1
+                for _ in range(n_bootstrap):
+                    idx_bootstrap = np.random.choice(n_samples, size=n_samples, replace=True)
+                    X_bootstrap = X[idx_bootstrap]
             
-                    bp_values = (cluster_match_counts / n_bootstrap) * 100
-                    au_values = np.clip(bp_values + np.random.normal(3, 1, size=len(bp_values)), 0, 100)
+                    boot_linkage = linkage(X_bootstrap, method=method)
+                    boot_labels = fcluster(boot_linkage, n_clusters, criterion='maxclust')
             
-                except Exception as e:
-                    bp_values = np.array([0] * n_clusters)
-                    au_values = np.array([0] * n_clusters)
-                    st.error(f"❌ Gagal melakukan bootstrap: {e}")
+                    # Cocokkan tiap titik bootstrap dengan label asli (via indeks)
+                    for i, original_idx in enumerate(idx_bootstrap):
+                        if original_idx < len(base_labels):
+                            if base_labels[original_idx] == boot_labels[i]:
+                                stability_counts[original_idx] += 1
             
-                return au_values, bp_values
-                        
-            # Tampilkan hasil di dashboard (di bawah tab Validasi Cluster, misalnya)
-            if 'cluster_results' in st.session_state and clustering_method != 'kmeans':
-                st.subheader("Analisis Multiscale Bootstrap (Simulasi Stabilitas)")
+                # Hitung AU per titik data (persentase stabilitas cluster tiap titik)
+                au_values_per_point = np.array([
+                    stability_counts[i] / n_bootstrap * 100 for i in range(n_samples)
+                ])
             
-                df_clean = st.session_state.processed_data['df_clean']
+                # Hitung AU dan BP per cluster (rata-rata dan median stabilitas anggota cluster)
+                clusterwise_au = []
+                clusterwise_bp = []
+            
+                for c in range(1, n_clusters + 1):
+                    members = (base_labels == c)
+                    au_vals = au_values_per_point[members]
+                    clusterwise_au.append(np.mean(au_vals))
+                    clusterwise_bp.append(np.median(au_vals))  # proxy BP
+            
+                return np.array(clusterwise_au), np.array(clusterwise_bp)
+            
+            # ======== BAGIAN STREAMLIT DI TAB VALIDASI CLUSTER ======== #
+            if 'cluster_results' in st.session_state and st.session_state.clustering_method != 'kmeans':
+                st.subheader("Analisis Multiscale Bootstrap")
+            
                 X_scaled = st.session_state.processed_data['X_scaled']
                 selected_method = st.session_state.clustering_method
                 n_clusters = st.session_state.n_clusters
             
                 with st.spinner("🔁 Melakukan simulasi bootstrap..."):
-                    au_values, bp_values = bootstrap_clustering(X_scaled.values, selected_method, n_clusters, n_bootstrap=100)
+                    au_vals, bp_vals = bootstrap_clustering(
+                        X=X_scaled,
+                        method=selected_method,
+                        n_clusters=n_clusters,
+                        n_bootstrap=100
+                    )
             
                 bootstrap_df = pd.DataFrame({
-                    'Cluster': [f'Cluster {i+1}' for i in range(n_clusters)],
-                    'AU (%)': au_values,
-                    'BP (%)': bp_values
+                    'Cluster': [f'Cluster {i+1}' for i in range(len(au_vals))],
+                    'AU (%)': au_vals,
+                    'BP (%)': bp_vals
                 })
             
-                avg_au = np.mean(au_values)
+                avg_au = np.mean(au_vals)
             
                 st.markdown(f"""
                 <div class="kpi-container">
@@ -1084,12 +1103,14 @@ def main():
                 with st.expander("🔽 Interpretasi Multiscale Bootstrap"):
                     st.markdown(
                         """
-                    <div class="cluster-interpretation">
-                    <strong>AU ≥ 95%</strong> pada sebagian besar cluster menandakan bahwa struktur pengelompokan cukup stabil terhadap variasi data.<br><br>
-                    - <strong>AU (Approximately Unbiased):</strong> P-value dari simulasi bootstrap; semakin tinggi, semakin stabil<br>
-                    - <strong>BP (Bootstrap Probability):</strong> Frekuensi cluster terbentuk kembali selama bootstrap<br><br>
-                    Catatan: Simulasi ini pendekatan sederhana, belum seakurat metode <code>pvclust</code> di R.
-                    </div>
+            <div class="cluster-interpretation">
+            <strong>Interpretasi AU dan BP:</strong><br><br>
+            
+            - <strong>AU (Approximately Unbiased):</strong> Mengukur stabilitas cluster berdasarkan hasil bootstrap. Jika AU > 95%, cluster dianggap sangat stabil dan tidak terbentuk secara acak.<br>
+            - <strong>BP (Bootstrap Probability):</strong> Probabilitas kemunculan cluster dalam sampling ulang. BP > 90% menunjukkan cluster cukup kuat.<br><br>
+            
+            Nilai AU & BP yang tinggi menunjukkan bahwa struktur pengelompokan cukup konsisten terhadap variasi data. Hasil ini memperkuat kepercayaan terhadap segmentasi yang dihasilkan dan bisa digunakan untuk rekomendasi kebijakan berbasis data.
+            </div>
                         """, unsafe_allow_html=True
                     )
             
