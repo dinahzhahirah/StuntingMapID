@@ -448,9 +448,12 @@ def main():
         if len(selected_features) < 2:
             st.warning("Pilih minimal 2 variabel!")
             return
-        
+
+         # Simpan fitur numerik yang dipilih untuk clustering
         st.session_state.selected_features = ['Provinsi'] + selected_features
-        
+        # Simpan daftar lengkap jika perlu nanti
+        st.session_state.selected_features_with_provinsi = ['Provinsi'] + selected_features
+
         # Clustering parameters
         st.subheader("Parameter Clustering")
         
@@ -542,7 +545,10 @@ def main():
                     imputasi_dict = row.to_dict()
                     imputasi_dict['Cluster'] = closest_cluster_label
                     for col in missing_cols:
-                        imputasi_dict[col] = cluster_centroids.loc[closest_cluster_label, col]
+                        if col in cluster_centroids.columns:
+                            imputasi_dict[col] = cluster_centroids.loc[closest_cluster_label, col]
+                        else:
+                            imputasi_dict[col] = np.nan  # atau nilai default lain
 
                     imputasi_rows.append(imputasi_dict)
                     imputasi_info.append(f"{prov_name} diimputasi menggunakan centroid cluster {closest_cluster_label}")
