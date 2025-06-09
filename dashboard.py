@@ -1066,45 +1066,45 @@ def main():
             
                 return np.array(clusterwise_au), np.array(clusterwise_bp)
             
-                # Jalankan fungsi bootstrap
-                au_vals, bp_vals = bootstrap_clustering(
-                    X=st.session_state.processed_data['X_scaled'],
-                    method=st.session_state.clustering_method,
-                    n_clusters=st.session_state.n_clusters,
-                    n_bootstrap=100  # bisa kamu ubah
-                )
-            
-                # Tabel hasil
-                bootstrap_df = pd.DataFrame({
-                    'Cluster': [f'Cluster {i+1}' for i in range(len(au_vals))],
-                    'AU (%)': au_vals,
-                    'BP (%)': bp_vals
-                })
-            
-                avg_au = np.mean(au_vals)
-            
-                st.markdown(f"""
-                <div class="kpi-container">
-                    <div class="kpi-value">{avg_au:.1f}%</div>
-                    <div class="kpi-label">Rata-rata AU (Approximately Unbiased)</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-                st.dataframe(bootstrap_df, use_container_width=True)
-            
-                with st.expander("🔽 Interpretasi Multiscale Bootstrap"):
-                    st.markdown(
-                        """
-            <div class="cluster-interpretation">
-            <strong>Interpretasi AU dan BP:</strong><br><br>
-            
-            - <strong>AU (Approximately Unbiased):</strong> Mengukur stabilitas cluster berdasarkan hasil bootstrap. Jika AU > 95%, cluster dianggap sangat stabil dan tidak terbentuk secara acak.
-            - <strong>BP (Bootstrap Probability):</strong> Probabilitas kemunculan cluster dalam sampling ulang. BP > 90% menunjukkan cluster cukup kuat.<br><br>
-            
-            Nilai AU & BP yang tinggi menunjukkan bahwa struktur pengelompokan cukup konsisten terhadap variasi data. Hasil ini memperkuat kepercayaan terhadap segmentasi yang dihasilkan dan bisa digunakan untuk rekomendasi kebijakan berbasis data.
+            # Jalankan fungsi bootstrap
+            au_vals, bp_vals = bootstrap_clustering(
+                X=st.session_state.processed_data['X_scaled'],
+                method=st.session_state.clustering_method,
+                n_clusters=st.session_state.n_clusters,
+                n_bootstrap=100  # bisa kamu ubah
+            )
+        
+            # Tabel hasil
+            bootstrap_df = pd.DataFrame({
+                'Cluster': [f'Cluster {i+1}' for i in range(len(au_vals))],
+                'AU (%)': au_vals,
+                'BP (%)': bp_vals
+            })
+        
+            avg_au = np.mean(au_vals)
+        
+            st.markdown(f"""
+            <div class="kpi-container">
+                <div class="kpi-value">{avg_au:.1f}%</div>
+                <div class="kpi-label">Rata-rata AU (Approximately Unbiased)</div>
             </div>
-                        """, unsafe_allow_html=True
-                    )
+            """, unsafe_allow_html=True)
+        
+            st.dataframe(bootstrap_df, use_container_width=True)
+        
+            with st.expander("🔽 Interpretasi Multiscale Bootstrap"):
+                st.markdown(
+                    """
+        <div class="cluster-interpretation">
+        <strong>Interpretasi AU dan BP:</strong><br><br>
+        
+        - <strong>AU (Approximately Unbiased):</strong> Mengukur stabilitas cluster berdasarkan hasil bootstrap. Jika AU > 95%, cluster dianggap sangat stabil dan tidak terbentuk secara acak.
+        - <strong>BP (Bootstrap Probability):</strong> Probabilitas kemunculan cluster dalam sampling ulang. BP > 90% menunjukkan cluster cukup kuat.<br><br>
+        
+        Nilai AU & BP yang tinggi menunjukkan bahwa struktur pengelompokan cukup konsisten terhadap variasi data. Hasil ini memperkuat kepercayaan terhadap segmentasi yang dihasilkan dan bisa digunakan untuk rekomendasi kebijakan berbasis data.
+        </div>
+                    """, unsafe_allow_html=True
+                )
             
             # Missing value imputation simulation
             st.subheader("Imputasi Missing Value")
