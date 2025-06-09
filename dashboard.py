@@ -80,6 +80,23 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+<style>
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+.element-container {
+    margin-bottom: 0rem !important;
+}
+iframe {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    display: block;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Initialize session state
 if 'data' not in st.session_state:
     st.session_state.data = None
@@ -586,6 +603,7 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
             
+            # Cari Provinsi
             st.markdown("🔍 Cari Provinsi")
             province_search = st.text_input(
                 "Nama Provinsi:",
@@ -593,18 +611,16 @@ def main():
                 key="province_search_main"
             )
 
-            # Map
-            st.subheader("Peta Cluster Wilayah")
-            
             # Handle province search
-            if 'province_search' in locals() and province_search:
+            province_data = None
+            focus_province = None
+            if province_search:
                 matching_provinces = df_results[
                     df_results['Provinsi'].str.contains(province_search, case=False, na=False)
                 ]
                 if not matching_provinces.empty:
                     province_data = matching_provinces.iloc[0]
-                    
-                    # Show province info
+                    focus_province = province_data['Provinsi']
                     st.markdown(f"""
                     <div class="success-box">
                         <strong>Provinsi Ditemukan: {province_data['Provinsi']}</strong><br>
@@ -612,10 +628,13 @@ def main():
                         <strong>Prevalensi Stunting:</strong> {province_data['Prevalensi Stunting']:.1f}%
                     </div>
                     """, unsafe_allow_html=True)
-            
+
+            # SUBHEADER PETA
+            st.subheader("Peta Cluster Wilayah")
+
             # Create and display map
-            map_obj = create_indonesia_map(df_results, focus_province=province_data['Provinsi'] if 'province_data' in locals() and province_data is not None else None)
-            st_folium(map_obj, width=700, height=500)
+            map_obj = create_indonesia_map(df_results, focus_province=focus_province)
+            st_folium(map_obj, height=500, use_container_width=True)
             
             # Charts (atas-bawah, bukan kolom)
             st.subheader("Jumlah Provinsi per Cluster")
@@ -628,7 +647,7 @@ def main():
                 text=cluster_counts.values
             )
             fig.update_traces(textposition='outside')
-            fig.update_layout(height=500)
+            fig.update_layout(height=400, margin=dict(t=20, b=10, l=10, r=10))
             st.plotly_chart(fig, use_container_width=True)
 
             # Rata-rata Indikator per Cluster
@@ -756,33 +775,73 @@ def main():
             priority_scores['Prioritas'] = priority_scores['Total'].rank(ascending=True, method='min').astype(int)
             priority_scores = priority_scores.sort_values('Prioritas')
 
-            # Mapping cluster ke prioritas
+            # Mapping cluster ke prioritas dan total skor
             cluster_to_priority = priority_scores['Prioritas'].to_dict()
+            cluster_to_total_score = priority_scores['Total'].to_dict()
 
             # Cluster interpretation
             st.subheader("Interpretasi Cluster")
-            
+            st.markdown("""
+            <div class="warning-box">
+            <b>Catatan:</b><br>
+            Penentuan <b>Prioritas Intervensi</b> pada dashboard ini dihitung dari <b>akumulasi ranking rata-rata seluruh indikator utama</b> (stunting, pendidikan, kemiskinan, ibu KEK, akses sanitasi, air minum, dan kesehatan dasar) dengan bobot sama.<br>
+            <b>Prioritas #1</b> berarti cluster dengan masalah terakumulasi paling berat dan membutuhkan penanganan segera.<br>
+            Semakin besar masalah pada indikator-indikator tersebut, semakin tinggi prioritas intervensi yang diberikan.
+            </div>
+            """, unsafe_allow_html=True)
+            # Rata-rata nasional untuk threshold
+            national_means = df_results[selected_features].mean()
+
+            # Mapping indikator ke label masalah & rekomendasi intervensi
+            indikator_labels = {
+                'Prevalensi Stunting': ('prevalensi stunting tinggi', 'perbaikan gizi'),
+                'Persentase Penduduk 15 Tahun Tidak Tamat SD': ('tingkat pendidikan rendah', 'peningkatan pendidikan'),
+                'Persentase Penduduk Miskin': ('kemiskinan tinggi', 'pengentasan kemiskinan'),
+                'Ibu Hamil KEK': ('ibu KEK tinggi', 'intervensi gizi ibu hamil'),
+                'Akses Sanitasi Layak': ('akses sanitasi rendah', 'peningkatan sanitasi'),
+                'Akses Air Minum Layak': ('akses air minum rendah', 'peningkatan air minum layak'),
+                'Akses Kesehatan Dasar': ('akses kesehatan dasar rendah', 'peningkatan akses kesehatan dasar')
+            }
+
             for cluster in sorted(df_results['Cluster'].unique()):
                 cluster_data = df_results[df_results['Cluster'] == cluster]
                 cluster_means = cluster_data[selected_features].mean()
-                
-                # Determine cluster characteristics
-                high_stunting = cluster_means['Prevalensi Stunting'] > avg_stunting
-                low_education = cluster_means.get('Persentase Penduduk 15 Tahun Tidak Tamat SD', 0) > df_results['Persentase Penduduk 15 Tahun Tidak Tamat SD'].mean()
-                high_poverty = cluster_means.get('Persentase Penduduk Miskin', 0) > df_results['Persentase Penduduk Miskin'].mean()
-                
-                # Generate interpretation
-                if high_stunting and low_education and high_poverty:
-                    risk_level = "Risiko Tinggi"
-                    interpretation = f"Cluster {cluster} mencerminkan wilayah dengan risiko tinggi stunting. Karakteristik utama meliputi prevalensi stunting tinggi ({cluster_means['Prevalensi Stunting']:.1f}%), tingkat pendidikan rendah, dan kemiskinan tinggi. Wilayah ini membutuhkan intervensi prioritas dalam program perbaikan gizi, pendidikan, dan pengentasan kemiskinan."
-                elif not high_stunting and not low_education and not high_poverty:
-                    risk_level = "Risiko Rendah"
-                    interpretation = f"Cluster {cluster} menunjukkan kondisi yang baik dengan prevalensi stunting rendah ({cluster_means['Prevalensi Stunting']:.1f}%). Wilayah ini memiliki tingkat pendidikan dan ekonomi yang lebih baik, serta akses layanan dasar yang memadai. Dapat dijadikan benchmark untuk wilayah lain."
-                else:
-                    risk_level = "Risiko Sedang"
-                    interpretation = f"Cluster {cluster} berada dalam kategori sedang dengan prevalensi stunting {cluster_means['Prevalensi Stunting']:.1f}%. Membutuhkan perhatian khusus pada beberapa indikator tertentu untuk pencegahan peningkatan risiko stunting."
-                
                 prioritas = cluster_to_priority.get(cluster, "-")
+                total_score = cluster_to_total_score.get(cluster, None)
+                q1 = priority_scores['Total'].quantile(0.33)
+                q2 = priority_scores['Total'].quantile(0.66)
+                if total_score <= q1:
+                    risk_level = "Risiko Tinggi"
+                elif total_score <= q2:
+                    risk_level = "Risiko Sedang"
+                else:
+                    risk_level = "Risiko Rendah"
+
+                # --- Cari masalah berat di cluster ini ---
+                masalah_berat = []
+                rekomendasi = []
+                for var in selected_features:
+                    if var not in indikator_labels:
+                        continue
+                    label_masalah, label_rekom = indikator_labels[var]
+                    # Untuk high_is_bad: jika cluster > nasional
+                    if var in high_is_bad and cluster_means[var] > national_means[var]:
+                        masalah_berat.append(f"{label_masalah} ({cluster_means[var]:.1f}%)")
+                        rekomendasi.append(label_rekom)
+                    # Untuk low_is_bad: jika cluster < nasional
+                    if var in low_is_bad and cluster_means[var] < national_means[var]:
+                        masalah_berat.append(f"{label_masalah} ({cluster_means[var]:.1f}%)")
+                        rekomendasi.append(label_rekom)
+
+                masalah_str = ", ".join(masalah_berat) if masalah_berat else "tidak ada masalah berat menonjol"
+                rekom_str = ", ".join(sorted(set(rekomendasi)))
+
+                interpretation = (
+                    f"Cluster {cluster} mencerminkan wilayah dengan {risk_level.lower()} stunting. "
+                    f"Karakteristik utama meliputi {masalah_str}. "
+                    f"Wilayah ini membutuhkan intervensi prioritas dalam program {rekom_str}."
+                )
+
                 with st.expander(f"Cluster {cluster} - {risk_level} ({len(cluster_data)} provinsi) | Prioritas #{prioritas}"):
                     st.markdown(f"""
                     <div class="cluster-interpretation">
