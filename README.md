@@ -67,8 +67,8 @@ streamlit run dashboard.py --server.port 8501
 
 ```
 📦 StuntingMapID
-├── 📄 dashboard.py      # File utama aplikasi
-├── 📄 requirements.txt           # Dependencies Python
+├── 📄 dashboard.py              # File utama aplikasi
+├── 📄 requirements.txt          # Dependencies Python
 ├── 📄 Stunting2023.csv          # Data sample
 ├── 📄 README.md                 # Dokumentasi
 ```
