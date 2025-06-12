@@ -718,23 +718,24 @@ def main():
             for i, feature in enumerate(selected_features):
                 row = i // cols + 1
                 col = i % cols + 1
-
+            
                 for j, cluster in enumerate(cluster_list):
                     cluster_data = df_results[df_results['Cluster'] == cluster][feature]
                     fig.add_trace(
                         go.Box(
                             y=cluster_data,
+                            x=[cluster] * len(cluster_data),  # ini perbaikannya
                             name=f"Cluster {cluster}",
                             marker_color=color_map[cluster],
                             boxpoints='outliers',
                             showlegend=(i == 0),
                             legendgroup=f"Cluster {cluster}",
                             line_width=2,
-                            width=0.5  # Perbesar box
+                            width=0.5
                         ),
                         row=row, col=col
                     )
-
+               
                 # Sumbu x hanya angka cluster
                 fig.update_xaxes(
                     tickmode='array',
@@ -748,8 +749,10 @@ def main():
                 height=350*rows,
                 showlegend=True,
                 boxmode='group',
-                title_text=None
+                title_text=None,
+                legend_title_text='Cluster'
             )
+        
             st.plotly_chart(fig, use_container_width=True)
             
             # Penentuan Prioritas Cluster Otomatis
