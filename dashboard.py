@@ -400,7 +400,7 @@ def get_template_download():
 
 # Main app
 def main():
-    st.markdown('<h1 class="main-header"> Dashboard Clustering Stunting Indonesia</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header"> Dashboard Clustering Stunting di Indonesia</h1>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
