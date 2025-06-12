@@ -1058,11 +1058,11 @@ def main():
                 st.markdown(
                     """
             <div class="cluster-interpretation">
-            <strong>Interpretasi nilai AU:</strong><br><br>
-            - AU ≥ 0.95 (95%): Cluster sangat didukung (highly supported) - sangat reliable, struktur cluster stabil dan tidak terbentuk secara acak
-            - AU 0.90-0.94 (90-94%): Cluster didukung baik (well supported) - reliable, struktur cluster relatif stabil dan tidak terbentuk secara acak
-            - AU 0.80-0.89 (80-89%): Cluster didukung moderat (moderately supported) - cukup reliable, struktur cluster menunjukkan pola yang konsisten namun masih memiliki ketidakpastian, kemungkinan terbentuk secara acak relatif rendah tapi tidak dapat diabaikan
-            - AU < 0.80 (80%): Cluster kurang didukung (poorly supported) - tidak reliable
+            <strong>Nilai AU:</strong><br><br>
+            - AU ≥ 0.95 (95%): Cluster sangat didukung (highly supported) - sangat reliable, struktur cluster stabil dan tidak terbentuk secara acak <br>
+            - AU 0.90-0.94 (90-94%): Cluster didukung baik (well supported) - reliable, struktur cluster relatif stabil dan tidak terbentuk secara acak <br>
+            - AU 0.80-0.89 (80-89%): Cluster didukung moderat (moderately supported) - cukup reliable, struktur cluster menunjukkan pola yang konsisten namun masih memiliki ketidakpastian, kemungkinan terbentuk secara acak relatif rendah tapi tidak dapat diabaikan <br>
+            - AU < 0.80 (80%): Cluster kurang didukung (poorly supported) - tidak reliable Hasil cluster ini memberikan bukti terhadap hasil pengelompokan sehingga bisa menjadi dasar yang valid untuk aplikasi praktis dalam kebijakan pemerintah. <br>
             Hasil cluster ini memberikan bukti terhadap hasil pengelompokan sehingga bisa menjadi dasar yang valid untuk aplikasi praktis dalam kebijakan pemerintah.<br><br>
             - <strong>AU (Approximately Unbiased):</strong> Nilai p-value yang tidak bias, &gt;95% menunjukkan cluster sangat stabil<br>
             - <strong>BP (Bootstrap Probability):</strong> Probabilitas bootstrap standar
