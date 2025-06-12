@@ -29,7 +29,7 @@ warnings.filterwarnings('ignore')
 
 # Page configuration
 st.set_page_config(
-    page_title="Dashboard Clustering Stunting Indonesia",
+    page_title="Dashboard Clustering Stunting di Indonesia",
     layout="wide",
     initial_sidebar_state="expanded"
 )
